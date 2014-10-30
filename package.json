@@ -1,0 +1,15 @@
+{
+	"name": "ng-server-prototype",
+	"main": "server.js",
+	"dependencies": {
+		"express": "*",
+        "mongoose": "~3.6.13",
+        "passport": "~0.2",
+        "method-override":"~2.2",
+        "cookie-parser":"~1.2",
+        "express-session": "*",
+        "passport-local":"~1.0",
+		"body-parser": "*"
+	}
+}
+
