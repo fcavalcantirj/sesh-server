@@ -74,7 +74,7 @@ router.route('/users')
                         res.send(err);
                     }
                     //send email
-                    sendEmail(req.body.email);
+                    //sendEmail(req.body.email);
                     res.json({ message: 'success' });
                 });
             }else{
