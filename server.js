@@ -3,15 +3,12 @@ var express     = require('express')
     , bodyParser  = require('body-parser');
 
 var User = require('./app/models/user');
-var email   = require("./node_modules/emailjs/email");
+var mongo   = require('mongoose');
+var nodemailer = require("nodemailer");
 
 var hasError = false;
 if(!process.env.EMAILUSER){
     console.log('missing env variable EMAILUSER');
-    hasError = true;
-}
-if (!process.env.EMAILSMTP){
-    console.log('missing env variable EMAILSMTP');
     hasError = true;
 }
 if(!process.env.EMAILPASS){
@@ -26,21 +23,27 @@ if(hasError){
     process.exit(1);
 }
 
-
-var mongo   = require('mongoose');
-var server  = email.server.connect({
-    user:    process.env.EMAILUSER,
-    password:process.env.EMAILPASS,
-    host:    process.env.EMAILSMTP,
-    ssl:     true
+var transport = nodemailer.createTransport({
+    service: 'Zoho',
+    auth: {
+        user: process.env.EMAILUSER,
+        pass: process.env.EMAILPASS
+    }
 });
-var sendEmail = function(email) {
-    server.send({
-        text:    "Welcome!\r\n\r\nYou've been added to the early-access list for Sesh, the world's first online platform for group coaching.\r\n\r\nYou'll be one of the first to receive an invite to join our early adopter groups. We can't wait to let you try Sesh and let us know what you think!\r\n\r\nIf you're as excited as we are, share the love with your friends by posting http://joinsesh.com to Facebook, Twitter, or anywhere you connect.\r\n\r\nIf you have any questions, comments, or other feedback, please send us an email at hello@joinsesh.com. We would love to hear from you.\r\n\r\nThank you,\r\n\r\nThe Sesh Team",
-        from:    "Sesh Team <no-reply@joinsesh.com>",
-        to:      email,
-        subject: "Welcome to Sesh"
-    }, function(err, message) { console.log(err || message); });
+
+var sendSmtpEmail = function(email){
+    transport.sendMail({
+        from: "Sesh Team <no-reply@joinsesh.com>",
+        to: email,
+        subject: "Welcome to Sesh",
+        text: "Welcome!\r\n\r\nYou've been added to the early-access list for Sesh, the world's first online platform for group coaching.\r\n\r\nYou'll be one of the first to receive an invite to join our early adopter groups. We can't wait to let you try Sesh and let us know what you think!\r\n\r\nIf you're as excited as we are, share the love with your friends by posting http://joinsesh.com to Facebook, Twitter, or anywhere you connect.\r\n\r\nIf you have any questions, comments, or other feedback, please send us an email at hello@joinsesh.com. We would love to hear from you.\r\n\r\nThank you,\r\n\r\nThe Sesh Team"
+    }, function(error, info){
+        if(error){
+            console.log(error);
+        }else{
+            console.log("Message sent to=["+email+'] with response=[' + info.response+"]");
+        }
+    });
 };
 mongo.connect(process.env.DBURL);
 
@@ -94,13 +97,11 @@ router.route('/users')
                     if (err){
                         res.send(err);
                     }
-                    //send email
-                    sendEmail(req.body.email);
+                    sendSmtpEmail(req.body.email);
                     res.json({ message: 'success' });
                 });
             }else{
                 //return res.send(400);
-                sendEmail(req.body.email);
                 res.json({ message: 'success' });
             }
         });
