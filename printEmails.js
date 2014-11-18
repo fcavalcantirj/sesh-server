@@ -16,6 +16,7 @@ User.find(function (err, users) {
     if (err) {
         console.log(err);
     }
+    console.log('nOfEmail=['+users.length+']');
     for(var u in users)
     {
         console.log(users[u].email);
