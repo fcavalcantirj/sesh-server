@@ -1,8 +1,11 @@
 var express     = require('express')
     , app         = express()
-    , bodyParser  = require('body-parser');
+    , bodyParser  = require('body-parser')
+    , OpenTok = require('opentok')
 
 var User = require('./app/models/user');
+var OpenTokUser = require('./app/models/opentokusers');
+var Session = require('./app/models/session');
 var mongo   = require('mongoose');
 var nodemailer = require("nodemailer");
 
@@ -19,9 +22,55 @@ if(!process.env.DBURL){
     console.log('missing env variable DBURL');
     hasError = true;
 }
+if(!process.env.API_KEY){
+    console.log('missing env variable API_KEY');
+    //hasError = true;
+}
+if(!process.env.API_SECRET){
+    console.log('missing env variable API_SECRET');
+    //hasError = true;
+}
 if(hasError){
     process.exit(1);
 }
+
+var opentok = new OpenTok((process.env.API_KEY || '45082512'), (process.env.API_SECRET || 'a75dfb8c6292c26156271b6956be4a58a42b931a'));
+
+var generateToken = function(name, sessionId, callback){
+    var tokenOptions = {};
+    tokenOptions.role = "publisher";
+    tokenOptions.data = "name="+name;
+    var token = opentok.generateToken(sessionId, tokenOptions);
+    callback(token);
+};
+var generateSessionId = function(callback){
+    Session.find(function (err, sessions) {
+        if (err) {
+            console.log(err);
+            callback(err);
+        }else{
+            if(!sessions || sessions.length == 0){
+                opentok.createSession({mediaMode:"routed"}, function(err, session) {
+                    if (err) {
+                        console.log(err);
+                        callback(err);
+                    }else{
+                        var newSession = new Session();
+                        newSession.sessionId = session.sessionId;
+                        newSession.save(function(err) {
+                            if (err){
+                                res.send(err);
+                            }
+                            callback(session.sessionId);
+                        });
+                    }
+                });
+            }else{
+                callback(sessions[0].sessionId);
+            }
+        }
+    });
+};
 
 var transport = nodemailer.createTransport({
     service: 'Zoho',
@@ -70,7 +119,6 @@ var router = express.Router();
 
 // REST API
 
-
 /**
  * USERS
  */
@@ -103,6 +151,68 @@ router.route('/users')
             }else{
                 //return res.send(400);
                 res.json({ message: 'success' });
+            }
+        });
+    });
+
+/**
+ * SESSIONS
+ */
+
+router.route('/token')
+    .post(function(req, res) {
+        OpenTokUser.findOne({name: req.body.name}, function(err, user) {
+            if (err){
+                res.send(err);
+            }
+            if(user){
+                var lastUpdated = new Date(user.lastUpdated);
+                var now = new Date();
+                var timeDiff = Math.abs(now.getTime() - lastUpdated.getTime());
+                if(timeDiff >= 86400000){
+                    generateSessionId(function(sessionId){
+                        generateToken(req.body.name, sessionId, function(token){
+                            if(!token){
+                                console.log('null token for user.name=['+user.name+'] and sessionId=['+sessionId+']');
+                                res.status(500).send({message:"null token"});
+                            }
+                            user.token = token;
+                            user.lastUpdated = now;
+                            user.save(function(err) {
+                                if (err){
+                                    res.send(err);
+                                }
+                                console.log('old token. generated new one for user.name=['+user.name+'] and token=['+user.token+']');
+                                res.json({ token: token });
+                            });
+                        });
+                    });
+                }else{
+                    console.log('found user with name=['+user.name+'] and token=['+user.token+']');
+                    res.json({ token: user.token });
+                }
+            }else{
+                generateSessionId(function(sessionId){
+                    generateToken(req.body.name, sessionId, function(token){
+                        if(!token){
+                            console.log('null token for req.body.name=['+req.body.name+'] and sessionId=['+sessionId+']');
+                            res.status(500).send({message:"null token"});
+                        }else{
+                            var openTokUser = new OpenTokUser();
+                            openTokUser.name = req.body.name;
+                            openTokUser.token = token;
+                            openTokUser.expireTime = 86400000;
+                            openTokUser.lastUpdated = new Date();
+                            openTokUser.save(function(err) {
+                                if (err){
+                                    res.send(err);
+                                }else{
+                                    res.json({ token: token });
+                                }
+                            });
+                        }
+                    });
+                });
             }
         });
     });
