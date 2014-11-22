@@ -183,7 +183,7 @@ router.route('/token')
                                     res.send(err);
                                 }
                                 console.log('old token. generated new one for user.name=['+user.name+'] and token=['+user.token+']');
-                                res.json({ token: token });
+                                res.json({ token: token, sessionId: sessionId });
                             });
                         });
                     });
@@ -207,7 +207,7 @@ router.route('/token')
                                 if (err){
                                     res.send(err);
                                 }else{
-                                    res.json({ token: token });
+                                    res.json({ token: token, sessionId: sessionId });
                                 }
                             });
                         }
