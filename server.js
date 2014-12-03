@@ -188,8 +188,14 @@ router.route('/token')
                         });
                     });
                 }else{
-                    console.log('found user with name=['+user.name+'] and token=['+user.token+']');
-                    res.json({ token: user.token, sessionId: sessionId });
+                    generateSessionId(function(sessionId){
+                        if(!sessionId){
+                            console.log('null sessionId for user.name=['+req.body.name+'] and sessionId=['+sessionId+']');
+                            res.status(500).send({message:"null token"});
+                        }
+                        console.log('found user with name=['+user.name+'] and token=['+user.token+'] and sessionId=['+sessionId+']');
+                        res.json({ token: user.token, sessionId: sessionId });
+                    });
                 }
             }else{
                 generateSessionId(function(sessionId){
@@ -207,6 +213,7 @@ router.route('/token')
                                 if (err){
                                     res.send(err);
                                 }else{
+                                    console.log('generated new user with user.name=['+req.body.name+'] and token=['+user.token+'] and sessionId=['+sessionId+']');
                                     res.json({ token: token, sessionId: sessionId });
                                 }
                             });
