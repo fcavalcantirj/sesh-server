@@ -172,8 +172,8 @@ router.route('/token')
                 if(timeDiff >= 86400000){
                     generateSessionId(function(sessionId){
                         generateToken(req.body.name, sessionId, function(token){
-                            if(!token){
-                                console.log('null token for user.name=['+user.name+'] and sessionId=['+sessionId+']');
+                            if(!token || !sessionId){
+                                console.log('null token || sessionId for user.name=['+req.body.name+'] and sessionId=['+sessionId+']');
                                 res.status(500).send({message:"null token"});
                             }
                             user.token = token;
@@ -189,13 +189,13 @@ router.route('/token')
                     });
                 }else{
                     console.log('found user with name=['+user.name+'] and token=['+user.token+']');
-                    res.json({ token: user.token });
+                    res.json({ token: user.token, sessionId: sessionId });
                 }
             }else{
                 generateSessionId(function(sessionId){
                     generateToken(req.body.name, sessionId, function(token){
-                        if(!token){
-                            console.log('null token for req.body.name=['+req.body.name+'] and sessionId=['+sessionId+']');
+                        if(!token || !sessionId){
+                            console.log('null token || sessionId for req.body.name=['+req.body.name+'] and sessionId=['+sessionId+']');
                             res.status(500).send({message:"null token"});
                         }else{
                             var openTokUser = new OpenTokUser();
