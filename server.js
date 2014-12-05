@@ -120,6 +120,16 @@ var router = express.Router();
 // REST API
 
 /**
+ * HEALTHCHECK
+ */
+
+router.route('/healthcheck')
+    .get(function(req, res) {
+        console.log('healthcheck['+new Date()+']');
+        res.send('1');
+    });
+
+/**
  * USERS
  */
 
