@@ -213,7 +213,7 @@ router.route('/token')
                                 if (err){
                                     res.send(err);
                                 }else{
-                                    console.log('generated new user with user.name=['+req.body.name+'] and token=['+user.token+'] and sessionId=['+sessionId+']');
+                                    console.log('generated new user with user.name=['+req.body.name+'] and openTokUser.token=['+token+'] and sessionId=['+sessionId+']');
                                     res.json({ token: token, sessionId: sessionId });
                                 }
                             });
