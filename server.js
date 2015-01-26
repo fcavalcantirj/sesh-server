@@ -142,6 +142,28 @@ var findUserByEmail = function(email, callback){
     });
 };
 
+router.route('/v0/login')
+    .post(function(req, res) {
+        if(!req.body.user){
+            return res.send(400);
+        }else{
+            if(req.body.user === 'james' ){
+                res.json({ role: 'coach' });
+            }else{
+                res.json({ role: 'client' });
+            }
+        }
+    });
+
+router.route('/v0/groups')
+    .post(function(req, res) {
+        if(!req.body.role){
+            return res.send(400);
+        }else{
+
+        }
+    });
+
 router.route('/users')
     .post(function(req, res) {
         if(!req.body.email){
