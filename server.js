@@ -173,6 +173,7 @@ router.route('/users')
             if(!user){
                 var newUser = new User();
                 newUser.email = req.body.email;
+                newUser.isCoach = req.body.isCoach;
                 newUser.save(function(err) {
                     if (err){
                         res.send(err);
